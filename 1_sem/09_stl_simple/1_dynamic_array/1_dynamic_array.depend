@@ -1,0 +1,24 @@
+# depslib dependency file v1.0
+1731136466 source:c:\work\cpp-school-yong-manager\9\0_dynamic_array\main.cpp
+	<iostream>
+	"my_vector.h"
+
+1731136384 c:\work\cpp-school-yong-manager\9\0_dynamic_array\my_vector.h
+	<iostream>
+	<stdexcept>
+
+1731136466 source:c:\work\cpp-school-yong-manager\9\1_dynamic_array\main.cpp
+	<iostream>
+	"my_vector.h"
+
+1731137481 c:\work\cpp-school-yong-manager\9\1_dynamic_array\my_vector.h
+
+1731137557 source:c:\work\cpp-school-yong-manager\9\1_dynamic_array\my_vector.cpp
+	"my_vector.h"
+
+1731143900 source:c:\work\cpp_school_young_manager\sym_2024_2025\9_занятие_9_11_2024\1_dynamic_array\main.cpp
+	<iostream>
+	"my_vector.h"
+
+1731143900 c:\work\cpp_school_young_manager\sym_2024_2025\9_занятие_9_11_2024\1_dynamic_array\my_vector.h
+

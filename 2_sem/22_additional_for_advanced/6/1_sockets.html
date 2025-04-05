@@ -1,0 +1,128 @@
+<h2 id="-nix-">Разработка сетевых приложений в Unix-системах</h2>
+<h3 id="-">Сокеты</h3>
+<p><strong>Сокет</strong> представляет собой программную абстракцию, механизм для организации взаимодействия программ между собой. Эти программы могут располагаться на одном компьютере, могут выполняться на разных машинах в локальной сети или взаимодействовать через всемирную сеть.</p>
+<p>Программа использует сокеты, записывая в них и считывая из них информацию. </p>
+<p>Процесс использования сокетов в значительной мере стандартизирован и основан на нескольких библиотечных функциях. </p>
+<h3 id="-">Создание сокета</h3>
+<p>Сокеты создаются функцией <code>socket</code>:</p>
+<pre><code class="lang-cpp"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/types.h&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span>
+<span class="hljs-built_in">int</span> socket(<span class="hljs-built_in">int</span> domain, <span class="hljs-built_in">int</span> type, <span class="hljs-built_in">int</span> protocol)<span class="hljs-comment">;</span>
+</code></pre>
+<p>В качестве параметров функции выступают три значения:</p>
+<ul>
+<li><p><code>domain</code> - определяет адреса и протоколы, используемые при взаимодействии сокетов. Чаще всего используются значения <strong>AF_UNIX</strong>, когда необходимо связать процессы на локальной машине и можно задействовать юниксовую систему ввода/вывода и  <strong>AF_INET</strong>, - когда необходимо обеспечить связь через Интернет.</p>
+</li>
+<li><p><code>type</code> - определяет способ передачи данных по сети. Чаще других применяются <strong>SOCK_STREAM</strong>, <strong>SOCK_DGRAM</strong>, <strong>SOCK_RAW</strong>:</p>
+</li>
+<li><p><code>protocol</code> определяет протокол, используемый для передачи данных (0 - протокол по умолчанию).</p>
+</li>
+</ul>
+<p>Результатом работы функции является целое число, которое носит название <strong>дескриптор сокета</strong>.
+<p> Это значение должно быть положительным. Если функция возвращает -1, то создать сокет не удалось.
+<p>После создания сокета функцией <code>socket</code>, необходимо произвести его связывание с адресом в выбранном домене. Для этой цели используют функцию <code>bind</code>.</p>
+<pre><code class="lang-cpp"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/types.h&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span>
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">bind</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, <span class="hljs-keyword">struct</span> sockaddr *addr, <span class="hljs-keyword">int</span> addrlen)</span></span>;
+</code></pre>
+<p>Вид адреса зависит от выбранного вами домена. В Unix-домене это текстовая строка - имя файла, через который происходит обмен данными. В Internet-домене адрес задаётся комбинацией IP-адреса и 16-битного номера порта.</p>
+<p>Первый параметр функции - дескриптор сокета. Второй - адрес структуры, задающей параметры для связи сокета:</p>
+<pre><code class="lang-cpp"><span class="hljs-keyword">struct</span> sockaddr_in  {
+<span class="hljs-keyword">	short</span> <span class="hljs-keyword">int</span> sin_family;     
+<span class="hljs-keyword">	unsigned</span> <span class="hljs-keyword">short</span> <span class="hljs-keyword">int</span>  sin_port;       
+<span class="hljs-keyword">	struct</span> in_addr  sin_addr;       
+<span class="hljs-keyword">	unsigned</span> <span class="hljs-keyword">char</span> sin_zero[<span class="hljs-number">8</span>];  
+};
+</code></pre>
+<p>Описание полей структуры:</p>
+<ul>
+<li><strong>sin_family</strong> - Семейство адресов.</li>
+<li><strong>sin_port</strong> - Номер порта</li>
+<li><strong>sin_addr</strong> - IP-адрес</li>
+<li><strong>sin_zero</strong> - &quot;Дополнение&quot; до размера структуры <code>sockaddr</code></li>
+</ul>
+<p>Третий параметр - размер структуры с параметрами.</p>
+<p>Тажке при указании IP-адреса и номера порта необходимо преобразовать число из порядка хоста в сетевой. Для этого используются функции <code>htons</code> (Host TO Network Short) и <code>htonl</code> (Host TO Network Long).
+<h3 id="-">Установка соединения на стороне сервера</h3>
+<p>Установка соединения на стороне сервера состоит из четырёх этапов, ни один из которых не может быть опущен.
+<ol>
+<li> Создать сокет вызовом socket;
+<li> Связать сокет с конкретным адресом при помощи bind;
+<li> Перевести сокет в слушающий режим при помощи listen;
+<li> Принять соединение при помощи accept;
+</ol>
+<p>При выполнении пункта 3 создаётся очередь запросов на соединение. При этом сокет переводится в режим ожидания запросов со стороны клиентов. Всё это выполняет функция <code>listen</code>.</p>
+<pre><code class="lang-cpp"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">listen</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, <span class="hljs-keyword">int</span> backlog)</span></span>;
+</code></pre>
+<p>Первый параметр - дескриптор сокета, а второй задаёт размер очереди запросов. Когда сервер готов обслужить очередной запрос, он использует функцию <code>accept</code>.</p>
+<pre><code class="lang-cpp"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span><span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span>
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">accept</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, <span class="hljs-keyword">void</span> *addr, <span class="hljs-keyword">int</span> *addrlen)</span></span>;
+</code></pre>
+<p>Функция <code>accept</code> создаёт для общения с клиентом новый сокет и возвращает его дескриптор. Параметр <code>sockfd</code> задаёт слушающий сокет. После вызова он остаётся в слушающем состоянии и может принимать другие соединения. В структуру, на которую ссылается <code>addr</code>, записывается адрес сокета клиента, который установил соединение с сервером. В переменную, адресуемую указателем <code>addrlen</code>, изначально записывается размер структуры; функция <code>accept</code> записывает туда длину, которая реально была использована.
+<h3 id="-">Установка соединения на стороне клиента</h3>
+<p>На стороне клиента для установления соединения используется функция <code>connect</code>, которая имеет следующий прототип.</p>
+<pre><code class="lang-cpp"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/types.h&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span>
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">connect</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, <span class="hljs-keyword">struct</span> sockaddr *serv_addr, <span class="hljs-keyword">int</span> addrlen)</span></span>;
+</code></pre>
+<p>Здесь <code>sockfd</code> - сокет, который будет использоваться для обмена данными с сервером, <code>serv_addr</code> содержит указатель на структуру с адресом сервера, а <code>addrlen</code> - длину этой структуры. Обычно сокет не требуется предварительно привязывать к локальному адресу, так как функция <code>connect</code> сделает это за вас, подобрав подходящий свободный порт.
+<h3 id="-">Пример: подготовка к передаче данных</h3>
+<p>Сначала рассмотрим <strong>сервер</strong>:</p>
+<pre><code class="lang-cpp">int sock, listener;
+struct sockaddr_in addr;
+int bytes_read;
+
+listener = socket(AF_INET, SOCK_STREAM, <span class="hljs-number">0</span>);
+<span class="hljs-keyword">if</span>(listener &lt; <span class="hljs-number">0</span>)
+{
+        perror(<span class="hljs-string">"socket"</span>);
+        <span class="hljs-keyword">exit</span>(<span class="hljs-number">1</span>);
+}
+
+addr.sin_family = AF_INET;
+addr.sin_port = htons(<span class="hljs-number">3425</span>);
+addr.sin_addr.s_addr = htonl(INADDR_ANY);
+<span class="hljs-keyword">if</span>(bind(listener, (struct sockaddr *)&amp;addr, sizeof(addr)) &lt; <span class="hljs-number">0</span>)
+{
+        perror(<span class="hljs-string">"bind"</span>);
+        <span class="hljs-keyword">exit</span>(<span class="hljs-number">2</span>);
+}
+
+listen(listener, <span class="hljs-number">1</span>);
+</code></pre>
+<p>После вызова <code>listen</code>, сервер готов к приему и обработке запросов от клиентов.</p>
+<p>Код на стороне <strong>клиента</strong>:</p>
+<pre><code class="lang-cpp">int sock;
+struct sockaddr_in addr;
+
+sock = socket(AF_INET, SOCK_STREAM, <span class="hljs-number">0</span>);
+<span class="hljs-keyword">if</span>(sock &lt; <span class="hljs-number">0</span>)
+{
+        perror(<span class="hljs-string">"socket"</span>);
+        <span class="hljs-keyword">exit</span>(<span class="hljs-number">1</span>);
+}
+
+addr.sin_family = AF_INET;
+addr.sin_port = htons(<span class="hljs-number">3425</span>); 
+addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+<span class="hljs-keyword">if</span>(connect(sock, (struct sockaddr *)&amp;addr, sizeof(addr)) &lt; <span class="hljs-number">0</span>)
+{
+       perror(<span class="hljs-string">"connect"</span>);
+       <span class="hljs-keyword">exit</span>(<span class="hljs-number">2</span>);
+}
+</code></pre>
+<h3 id="-">Обмен данными</h3>
+<p>После того как соединение установлено, можно начинать обмен данными. Для этого используются функции <code>send</code> и <code>recv</code>. </p>
+<p>Функция <code>send</code> используется для отправки данных и имеет следующий прототип.</p>
+<pre><code class="lang-cpp"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">send</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, <span class="hljs-keyword">const</span> <span class="hljs-keyword">void</span> *msg, <span class="hljs-keyword">int</span> len, <span class="hljs-keyword">int</span> flags)</span></span>;
+</code></pre>
+<p>Здесь <code>sockfd</code> - это, как всегда, дескриптор сокета, через который мы отправляем данные, <code>msg</code> - указатель на буфер с данными, <code>len</code> - длина буфера в байтах, а <code>flags</code> - набор битовых флагов, управляющих работой функции (если флаги не используются, передайте функции 0).</p>
+<p>Для чтения данных из сокета используется функция <code>recv</code>.</p>
+<pre><code class="lang-cpp"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">recv</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, <span class="hljs-keyword">void</span> *buf, <span class="hljs-keyword">int</span> len, <span class="hljs-keyword">int</span> flags)</span></span>;
+</code></pre>
+<p>В целом её использование аналогично <code>send</code>. Она точно так же принимает дескриптор сокета, указатель на буфер и набор флагов. По аналогии с <code>send</code> функция <code>recv</code> возвращает количество прочитанных байтов, которое может быть меньше размера буфера. Существует ещё один особый случай, при котором recv возвращает 0. Это означает, что соединение было разорвано.</p>
+<h3 id="-">Закрытие сокета</h3>
+<p>Закончив обмен данными, закройте сокет с помощью функции <code>close</code>. Это приведёт к разрыву соединения.</p>
+<pre><code class="lang-cpp"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;unistd.h&gt;</span></span>
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">close</span><span class="hljs-params">(<span class="hljs-keyword">int</span> fd)</span></span>;
+</code></pre>

@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1708026002 source:c:\users\egor\documents\cpp_school_young_manager\ege\matvey\1\1_59784\project\main.cpp
+	<iostream>
+	<fstream>
+	<cstdlib>
+
+1708026117 source:c:\users\egor\documents\cpp_school_young_manager\ege\1_задачи_на_числовые_вычисления\1_59784\project\main.cpp
+	<iostream>
+	<fstream>
+	<cstdlib>
+

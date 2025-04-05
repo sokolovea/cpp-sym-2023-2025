@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1732960014 source:c:\work\cpp-school-yong-manager\12_занятие_30_11_2024\3_set\main.cpp
+	<iostream>
+	<set>
+	<algorithm>
+

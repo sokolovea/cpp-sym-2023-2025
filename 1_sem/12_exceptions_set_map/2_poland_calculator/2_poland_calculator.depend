@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1732956858 source:c:\work\cpp-school-yong-manager\12_занятие_30_11_2024\2_poland_calculator\main.cpp
+	<iostream>
+	<stack>
+	<string>
+

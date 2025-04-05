@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обработанный видеопоток</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #video_container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+
+        #video_stream {
+            min-width: 320px;
+            max-width: 1280px;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #extra_image_container {
+            width: auto;
+            margin-left: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #extra_image {
+            width: auto;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body onload="hideRecognizeResults()">
+    <h1>Обработанный видеопоток</h1>
+    <div id="video_container">
+        <img id="video_stream" src="#" alt="Video Stream">
+        <div id="extra_image_container">
+            <div>
+                <label for="minBrightness">Минимальная яркость распознаваемого участка:</label>
+                <input type="range" id="minBrightness" name="minBrightness" min="0" max="255" value="100" onchange="updateMinBrightness(this.value)">
+                <output for="minBrightness" id="minBrightnessValue">100</output>
+                <br>
+                <label for="maxBrightness">Максимальная яркость распознаваемого участка:</label>
+                <input type="range" id="maxBrightness" name="maxBrightness" min="0" max="255" value="255" onchange="updateMaxBrightness(this.value)">
+                <output for="maxBrightness" id="maxBrightnessValue">255</output>
+                <br>
+                <label>Минимальная площадь движущегося объекта, пикселей:</label>
+                <input type="number" id="min_contour_area" value="500">
+                <br>
+                <button onclick="recognize()">Распознать движущиеся объекты</button>
+                <div id="recognizeResults">
+                    <p>Результат распознавания нейросети:</p>
+                    <img id="recognize_image" src="#" alt="Extra Image">
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        var recognizePressed = false;
+
+        var ws = new WebSocket("ws://localhost:9999");
+
+        ws.onmessage = function(event) {
+            var message = {
+                recognize: recognizePressed,
+                min_contour_area: document.getElementById("min_contour_area").value,
+                min_brightness: document.getElementById("minBrightness").value,
+                max_brightness: document.getElementById("maxBrightness").value
+            };
+            ws.send(JSON.stringify(message))
+
+            var jsonData = JSON.parse(event.data); // Распарсиваем JSON-строку
+            var img = document.getElementById("video_stream");
+            img.src = "data:image/jpeg;base64," + jsonData.video_image;
+    
+            if (jsonData.hasOwnProperty('recognize_image')) {
+                showRecognizeResults()
+                // Если JSON содержит данные recognize_results, извлекаем их и помещаем в картинку recognize_image
+                var recognizeImage = document.getElementById("recognize_image");
+                recognizeImage.src = "data:image/jpeg;base64," + jsonData.recognize_image;
+            }
+            updatePressed = false;
+            recognizePressed = false; 
+        };
+
+        ws.onclose = function(event) {
+            console.log("WebSocket connection closed.");
+        };
+
+        function recognize() {
+            recognizePressed = true;
+        };
+
+        function updateMinBrightness(value) {
+            document.getElementById('minBrightnessValue').value = value;
+        }
+
+        function updateMaxBrightness(value) {
+            document.getElementById('maxBrightnessValue').value = value;
+        }
+
+        function hideRecognizeResults() {
+            var div = document.getElementById("recognizeResults");
+            div.style.display = "none";
+        }
+
+        function showRecognizeResults() {
+            var div = document.getElementById("recognizeResults");
+            div.style.display = "block";
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1731098527 source:c:\work\cpp-school-yong-manager\9\4_list\main.cpp
+	<iostream>
+	"my_list.h"
+
+1731098069 c:\work\cpp-school-yong-manager\9\4_list\my_list.h
+	<iostream>
+

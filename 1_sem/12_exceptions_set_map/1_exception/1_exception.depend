@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1732958218 source:c:\work\cpp-school-yong-manager\12_занятие_30_11_2024\1_exception\main.cpp
+	<iostream>
+	<string>
+	<stdexcept>
+

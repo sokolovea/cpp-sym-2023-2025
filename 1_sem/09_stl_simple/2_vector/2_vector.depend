@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1731138719 source:c:\work\cpp-school-yong-manager\9\2_vector\main.cpp
+	<iostream>
+	<vector>
+	<algorithm>
+

@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>images/task.png</file>
+        <file>images/variant_task.png</file>
+        <file>images/smath.png</file>
+        <file>images/matplotlib.png</file>
+    </qresource>
+</RCC>
